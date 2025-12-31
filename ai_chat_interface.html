@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AI Chat Interface</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#F0A04B", // Accent Orange
+                        "secondary": "#9EC6F3", // Primary Blue
+                        "background-page": "#BDDDE4", // Light Cyan
+                        "background-light": "#BDDDE4", // Overriding default light bg to match request
+                        "background-dark": "#221910", // Keeping dark fallback
+                        "ai-text": "#111827",
+                        "user-text": "#FFFFFF",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "2xl": "2rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar hiding for cleaner mobile look */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Typing animation dots */
+        .typing-dot {
+            animation: typing 1.4s infinite ease-in-out both;
+        }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-page dark:bg-background-dark text-[#1b150d] font-display antialiased min-h-screen flex flex-col overflow-hidden">
+<!-- Header -->
+<header class="flex-none sticky top-0 z-50 bg-background-page/95 dark:bg-background-dark/95 backdrop-blur-sm px-4 pt-4 pb-2 border-b border-white/10">
+<!-- Safe area spacer for iOS top notch if needed, usually handled by padding -->
+<div class="flex items-center justify-between h-14">
+<button class="flex items-center justify-center size-10 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-[#1b150d] dark:text-white">
+<span class="material-symbols-outlined text-2xl">arrow_back_ios_new</span>
+</button>
+<div class="flex flex-col items-center flex-1">
+<h2 class="text-[#1b150d] dark:text-white text-lg font-bold leading-tight">Sophie</h2>
+<span class="text-xs font-medium text-[#1b150d]/60 dark:text-white/60 flex items-center gap-1">
+<span class="size-2 rounded-full bg-green-500 animate-pulse"></span>
+                    AI Assistant
+                </span>
+</div>
+<button class="flex items-center justify-center size-10 rounded-full overflow-hidden hover:opacity-80 transition-opacity">
+<!-- User Profile Icon -->
+<div class="size-full bg-[#f0a14c] flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-2xl">person</span>
+</div>
+</button>
+</div>
+</header>
+<!-- Chat Area -->
+<main class="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-6 no-scrollbar" id="chat-container">
+<!-- Timestamp -->
+<div class="flex justify-center">
+<span class="text-xs font-medium text-[#1b150d]/40 dark:text-white/40 bg-white/20 px-3 py-1 rounded-full">Today 9:41 AM</span>
+</div>
+<!-- AI Message -->
+<div class="flex items-end gap-3 group">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 shrink-0 shadow-sm border-2 border-white/30" data-alt="Portrait of a friendly AI assistant with a soft smile" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAP3S1R1d0EwqTPwgXWsMXXJO3Hj17dKnzF0xtvO3ABh-CLYPlESxuuUQsk4HUIc_1ehUi2hDuoT2QISMCKqwnU9JTa9R_nlcQaxocvrwTVmEYNNwUf20Inz39vpSBX7EH0f13Kr3XTkGODqQrtiLLajPRrHvDQWfX4wQdvMaWaNAVXh-6-Z7wR3FJ7_anGR1GdJ4bVEICtTgnSPJSmtYZjAIRr9ibE7wKxPNmN1IyjdKsJXSw7SPuTffsmKwKUXvaEfdAopEwGhsY");'>
+</div>
+<div class="flex flex-col gap-1 items-start max-w-[80%]">
+<span class="text-[#1b150d]/60 dark:text-white/60 text-xs font-medium ml-1">Sophie</span>
+<div class="p-4 rounded-2xl rounded-bl-none bg-secondary text-ai-text shadow-sm relative">
+<p class="text-[15px] font-normal leading-relaxed">Hello! I'm Sophie. How can I help you today?</p>
+</div>
+</div>
+</div>
+<!-- User Message -->
+<div class="flex items-end gap-3 justify-end group">
+<div class="flex flex-col gap-1 items-end max-w-[80%]">
+<!-- Removed 'You' label to match modern chat apps which often hide user name to reduce clutter -->
+<div class="p-4 rounded-2xl rounded-br-none bg-primary text-user-text shadow-sm relative">
+<p class="text-[15px] font-normal leading-relaxed">Can you summarize this article for me?</p>
+</div>
+<span class="text-[#1b150d]/40 dark:text-white/40 text-[10px] mr-1 font-medium">Read 9:42 AM</span>
+</div>
+<!-- Optional: User avatar can be hidden on mobile to save space, but requested in design plan. -->
+<!-- If we want to strictly follow "User bubbles aligned right", often implies no avatar, but example had one. Let's keep it minimal. -->
+</div>
+<!-- AI Message (Article Analysis) -->
+<div class="flex items-end gap-3 group">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 shrink-0 shadow-sm border-2 border-white/30" data-alt="Portrait of a friendly AI assistant with a soft smile" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDDgQKlK4sRLgzvB57OSQ6YDsVghVNsCn1741JgAslw2SbbD8aSqgNW_2zEztR9A9J-c-tEm3OmcpzcX7PdEvZSR96tHhxX5H1awBdRRerd61Ta3JxfLBUuzHoNAWKMJhz8zqc2Brdh_uKMcNYHrQNBCOK3hk2xzQDCXtCBDy3v8TwBTBmVeyZsPPqP1lV2KrDt_UFIHT6JAWCwcy05PM8fu5yHE6q-o1k5dNLKRQvp5qivRbc1owDI_Wne1fIY8QYzd_kVfDXl1PM");'>
+</div>
+<div class="flex flex-col gap-1 items-start max-w-[85%]">
+<span class="text-[#1b150d]/60 dark:text-white/60 text-xs font-medium ml-1">Sophie</span>
+<div class="p-4 rounded-2xl rounded-bl-none bg-secondary text-ai-text shadow-sm">
+<p class="text-[15px] font-normal leading-relaxed mb-2">Sure! I'd be happy to help with that. Please share the link or the text of the article you'd like me to summarize.</p>
+</div>
+</div>
+</div>
+<!-- User Message 2 -->
+<div class="flex items-end gap-3 justify-end group">
+<div class="flex flex-col gap-1 items-end max-w-[80%]">
+<div class="p-4 rounded-2xl rounded-br-none bg-primary text-user-text shadow-sm">
+<p class="text-[15px] font-normal leading-relaxed">Here it is: https://example.com/future-of-ai-design</p>
+</div>
+</div>
+</div>
+<!-- Loading / Typing State -->
+<div class="flex items-end gap-3 group">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 shrink-0 shadow-sm border-2 border-white/30" data-alt="Portrait of a friendly AI assistant with a soft smile" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDOpEiCPtBIYoJeEPn0VlfFXWlwRDu2qsqVDE-u_lyXUisaaxuKf8rxvgFcagdHrtKnhIat3-pehNdxctDszPFY__L_OSUxNLpqeXlekW6Jzy1pVp07MO7IqszNISVKkn4MA-ZnDclw74d2IoOWV8YCicPF5Pq4VINOKaoj69SF5UK6W5XQh_Yj1GyiFWxARmCZnP-q-81n6fMA6cEviTNw7cF74Ie67ElEcFJ3ZMT9fFPst-_lRdVDll-4h3PMGAUXby9uMN0x0j8");'>
+</div>
+<div class="flex flex-col gap-1 items-start">
+<span class="text-[#1b150d]/60 dark:text-white/60 text-xs font-medium ml-1">Sophie is typing...</span>
+<div class="px-4 py-3 rounded-2xl rounded-bl-none bg-secondary text-ai-text shadow-sm flex items-center gap-1 h-[46px]">
+<div class="size-2 bg-ai-text/50 rounded-full typing-dot"></div>
+<div class="size-2 bg-ai-text/50 rounded-full typing-dot"></div>
+<div class="size-2 bg-ai-text/50 rounded-full typing-dot"></div>
+</div>
+</div>
+</div>
+<!-- Spacer for input area visibility -->
+<div class="h-4"></div>
+</main>
+<!-- Sticky Input Area -->
+<footer class="flex-none sticky bottom-0 z-50 bg-background-page dark:bg-background-dark p-4 pb-6 pt-2">
+<div class="flex items-end gap-2 w-full max-w-[480px] mx-auto relative">
+<!-- Attachment Button (Optional visual flair) -->
+<button class="mb-2 p-2 text-[#1b150d]/50 dark:text-white/50 hover:text-primary transition-colors rounded-full">
+<span class="material-symbols-outlined text-2xl">add_circle</span>
+</button>
+<!-- Input Field -->
+<label class="flex-1 min-w-0 relative">
+<div class="relative flex items-center w-full shadow-sm rounded-3xl bg-white dark:bg-[#332b24] overflow-hidden transition-all focus-within:ring-2 focus-within:ring-primary/50">
+<input class="w-full h-12 pl-4 pr-12 bg-transparent border-none focus:ring-0 text-[#1b150d] dark:text-white placeholder:text-[#9a744c]/60 text-base font-normal" placeholder="Type a message..." type="text"/>
+<button class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-[#1b150d]/40 dark:text-white/40 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">mic</span>
+</button>
+</div>
+</label>
+<!-- Send Button -->
+<button class="flex items-center justify-center size-12 shrink-0 rounded-full bg-primary text-white shadow-md hover:bg-opacity-90 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-2xl ml-0.5">send</span>
+</button>
+</div>
+</footer>
+</body></html>

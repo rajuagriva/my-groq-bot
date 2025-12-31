@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Persona Selector Home</title>
+<!-- Google Fonts & Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f0a14c", // Accent Orange
+                        "primary-blue": "#9EC6F3", // Primary Blue from user req
+                        "bg-cyan": "#BDDDE4", // Light Cyan Background from user req
+                        "background-light": "#BDDDE4", // Mapping cyan to bg-light for this view
+                        "background-dark": "#221910",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "sans": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "2xl": "2rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display antialiased">
+<div class="relative flex h-full min-h-screen w-full flex-col bg-bg-cyan dark:bg-background-dark overflow-x-hidden">
+<!-- TopAppBar -->
+<div class="flex items-center px-6 py-4 justify-between pt-12"> <!-- pt-12 for iOS status bar breathing room -->
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center bg-white rounded-full p-2 shadow-sm text-primary-blue">
+<span class="material-symbols-outlined !text-[28px]">smart_toy</span>
+</div>
+<h2 class="text-[#1b150d] dark:text-white text-xl font-bold leading-tight tracking-[-0.015em]">AI Chatbot</h2>
+</div>
+<button class="flex items-center justify-center overflow-hidden rounded-full size-12 bg-white/50 backdrop-blur-sm hover:bg-white transition-colors text-[#1b150d] dark:text-white">
+<div class="size-12 bg-center bg-cover" data-alt="User profile avatar of a smiling person" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCYOrOrvzSlK9g_fS2dGiQeh_rNjyN7zu6UFSVyl2c5D6BMxqGEvkgQAffK0wl7jjBH8g4Faelb53SXnycdor0LjQe2n6yFx23oDuTJybAIpRJzbhzWGA6Js_gM39IBqpqvEsyldfJ7T3djb8T0fIygMPDJ22uVU0cwvZ9jqrIvBxpqQtXllthCSoQ0Rq8aIXvGT8ouB-yJ0OMFpJj9MvEFrydwjcte37Br43QTKC7y1xUMy0k4BJgKYNECjuCOF1tOJeGci1UciXI");'></div>
+</button>
+</div>
+<!-- Hero Section -->
+<div class="flex flex-col px-6 pt-6 pb-4">
+<h1 class="text-[#1b150d] dark:text-white tracking-tight text-[32px] font-bold leading-[1.1] mb-2">Choose Your <br/><span class="text-primary-blue dark:text-primary">AI Companion</span></h1>
+<p class="text-[#4a5568] dark:text-gray-300 text-base font-normal leading-relaxed">Select a persona to customize your chat experience today.</p>
+</div>
+<!-- Persona Grid -->
+<div class="flex-1 px-6 pb-24">
+<div class="grid grid-cols-2 gap-4">
+<!-- Card 1: Helpful Assistant -->
+<button class="group flex flex-col bg-white dark:bg-[#2A2A2A] rounded-2xl p-4 shadow-sm border-2 border-transparent hover:border-primary active:border-primary transition-all duration-200 hover:-translate-y-1 active:scale-95 text-left h-full">
+<div class="mb-4 size-14 rounded-xl bg-primary-blue/20 flex items-center justify-center text-primary-blue dark:text-primary-blue group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined !text-[32px]">support_agent</span>
+</div>
+<div class="mt-auto">
+<h3 class="text-[#1b150d] dark:text-white text-lg font-bold leading-tight mb-1">Helpful Assistant</h3>
+<p class="text-[#64748b] dark:text-gray-400 text-xs font-medium leading-normal">General inquiries &amp; daily tasks</p>
+</div>
+</button>
+<!-- Card 2: Code Expert -->
+<button class="group flex flex-col bg-white dark:bg-[#2A2A2A] rounded-2xl p-4 shadow-sm border-2 border-transparent hover:border-primary active:border-primary transition-all duration-200 hover:-translate-y-1 active:scale-95 text-left h-full">
+<div class="mb-4 size-14 rounded-xl bg-primary-blue/20 flex items-center justify-center text-primary-blue dark:text-primary-blue group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined !text-[32px]">terminal</span>
+</div>
+<div class="mt-auto">
+<h3 class="text-[#1b150d] dark:text-white text-lg font-bold leading-tight mb-1">Code Expert</h3>
+<p class="text-[#64748b] dark:text-gray-400 text-xs font-medium leading-normal">Debugging, scripts &amp; architecture</p>
+</div>
+</button>
+<!-- Card 3: Pro Writer -->
+<button class="group flex flex-col bg-white dark:bg-[#2A2A2A] rounded-2xl p-4 shadow-sm border-2 border-transparent hover:border-primary active:border-primary transition-all duration-200 hover:-translate-y-1 active:scale-95 text-left h-full">
+<div class="mb-4 size-14 rounded-xl bg-primary-blue/20 flex items-center justify-center text-primary-blue dark:text-primary-blue group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined !text-[32px]">edit_note</span>
+</div>
+<div class="mt-auto">
+<h3 class="text-[#1b150d] dark:text-white text-lg font-bold leading-tight mb-1">Pro Writer</h3>
+<p class="text-[#64748b] dark:text-gray-400 text-xs font-medium leading-normal">Essays, content &amp; copywriting</p>
+</div>
+</button>
+<!-- Card 4: Create Custom -->
+<button class="group flex flex-col bg-white/60 dark:bg-[#2A2A2A]/60 rounded-2xl p-4 border-2 border-dashed border-primary-blue hover:border-primary hover:bg-white dark:hover:bg-[#2A2A2A] transition-all duration-200 hover:-translate-y-1 active:scale-95 text-left h-full">
+<div class="mb-4 size-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined !text-[32px]">add</span>
+</div>
+<div class="mt-auto">
+<h3 class="text-[#1b150d] dark:text-white text-lg font-bold leading-tight mb-1">Create Custom</h3>
+<p class="text-[#64748b] dark:text-gray-400 text-xs font-medium leading-normal">Build your own unique persona</p>
+</div>
+</button>
+</div>
+</div>
+<!-- Bottom Navigation -->
+<div class="fixed bottom-0 left-0 right-0 z-50">
+<!-- Floating Style Nav for modern look -->
+<div class="absolute bottom-0 w-full h-24 bg-gradient-to-t from-bg-cyan via-bg-cyan/90 to-transparent dark:from-background-dark dark:via-background-dark/90 pointer-events-none"></div>
+<div class="relative mx-4 mb-6 bg-white dark:bg-[#1E1E1E] rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/20 px-6 py-3 flex justify-between items-center backdrop-blur-md">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined !text-[26px] font-variation-settings-fill">home</span>
+<span class="text-[10px] font-bold tracking-wide uppercase">Home</span>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-gray-400 dark:text-gray-500 hover:text-primary-blue transition-colors" href="#">
+<span class="material-symbols-outlined !text-[26px]">chat_bubble</span>
+<span class="text-[10px] font-bold tracking-wide uppercase">Chat</span>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-gray-400 dark:text-gray-500 hover:text-primary-blue transition-colors" href="#">
+<span class="material-symbols-outlined !text-[26px]">settings</span>
+<span class="text-[10px] font-bold tracking-wide uppercase">Settings</span>
+</a>
+</div>
+</div>
+</div>
+</body></html>
