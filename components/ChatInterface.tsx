@@ -31,6 +31,7 @@ export default function ChatInterface({
     systemPrompt = DEFAULT_PERSONA.systemPrompt
 }: ChatInterfaceProps) {
     const chatContainerRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -141,6 +142,10 @@ export default function ChatInterface({
             setError(err instanceof Error ? err.message : 'Terjadi kesalahan');
         } finally {
             setIsLoading(false);
+            // Auto-focus input after message is sent
+            setTimeout(() => {
+                inputRef.current?.focus();
+            }, 100);
         }
     };
 
@@ -269,6 +274,7 @@ export default function ChatInterface({
                         <label className="flex-1 min-w-0 relative">
                             <div className="relative flex items-center w-full shadow-sm rounded-3xl bg-white dark:bg-[#332b24] overflow-hidden transition-all focus-within:ring-2 focus-within:ring-primary/50">
                                 <input
+                                    ref={inputRef}
                                     className="w-full h-12 px-4 bg-transparent border-none focus:ring-0 text-[#1b150d] dark:text-white placeholder:text-[#9a744c]/60 text-base font-normal outline-none"
                                     placeholder="Ketik pesan..."
                                     type="text"
