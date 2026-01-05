@@ -102,7 +102,16 @@ export default function ChatInterface({
             });
 
             if (!response.ok) {
-                throw new Error('Failed to get response');
+                // Try to parse error message from JSON response
+                try {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Error ${response.status}`);
+                } catch (parseError) {
+                    if (parseError instanceof Error && parseError.message !== `Error ${response.status}`) {
+                        throw parseError;
+                    }
+                    throw new Error(`Server error: ${response.status}`);
+                }
             }
 
             // Handle streaming response
@@ -319,8 +328,8 @@ export default function ChatInterface({
                                                 setShowProviderMenu(false);
                                             }}
                                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left ${provider === opt.id
-                                                    ? 'bg-primary/10 text-primary'
-                                                    : 'hover:bg-black/5 dark:hover:bg-white/5 text-[#1b150d] dark:text-white'
+                                                ? 'bg-primary/10 text-primary'
+                                                : 'hover:bg-black/5 dark:hover:bg-white/5 text-[#1b150d] dark:text-white'
                                                 }`}
                                         >
                                             <span className="text-xl">{opt.icon}</span>

@@ -16,7 +16,8 @@ const GROQ_FALLBACK_MODELS = [
 ] as const;
 
 // Gemini model ID to use for grounded search
-const GEMINI_MODEL_ID = "gemini-2.0-flash-exp";
+// Using gemini-2.5-flash for better stability and rate limits
+const GEMINI_MODEL_ID = "gemini-2.5-flash";
 
 // Helper function to check if error is retryable
 function isRetryableError(error: unknown): boolean {
@@ -73,52 +74,73 @@ export async function POST(req: Request) {
                 );
             }
 
-            console.log("[Chat API]: Using Google Gemini with Search Grounding enabled");
+            try {
+                console.log("[Chat API]: Using Google Gemini with Search Grounding enabled");
 
-            // Calculate prompt tokens for tracking
-            const promptText = conversationMessages.map((m: { content: string }) => m.content).join(' ');
-            const promptTokens = estimateTokenCount(promptText);
+                // Calculate prompt tokens for tracking
+                const promptText = conversationMessages.map((m: { content: string }) => m.content).join(' ');
+                const promptTokens = estimateTokenCount(promptText);
 
-            // Use streamText for Google Gemini with grounding via google.tools.googleSearch
-            const result = streamText({
-                model: google(GEMINI_MODEL_ID),
-                messages: conversationMessages,
-                // Enable Google Search Grounding as a tool
-                tools: {
-                    google_search: google.tools.googleSearch({}),
-                },
-                onFinish: async ({ text, usage }) => {
-                    // Save token usage after streaming completes
-                    // AI SDK uses inputTokens/outputTokens instead of promptTokens/completionTokens
-                    const completionTokens = usage?.outputTokens || estimateTokenCount(text);
-                    const actualPromptTokens = usage?.inputTokens || promptTokens;
+                // Use streamText for Google Gemini with grounding via google.tools.googleSearch
+                // Using gemini-2.5-flash for better stability and rate limits
+                const result = streamText({
+                    model: google(GEMINI_MODEL_ID),
+                    messages: conversationMessages,
+                    // Enable Google Search Grounding as a tool
+                    tools: {
+                        google_search: google.tools.googleSearch({}),
+                    },
+                    onFinish: async ({ text, usage }) => {
+                        // Save token usage after streaming completes
+                        const completionTokens = usage?.outputTokens || estimateTokenCount(text);
+                        const actualPromptTokens = usage?.inputTokens || promptTokens;
 
-                    const tokenRecord: TokenUsageRecord = {
-                        id: `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
-                        userId: userInfo.userId,
-                        userName: userInfo.userName,
-                        timestamp: new Date().toISOString(),
-                        model: `${GEMINI_MODEL_ID} (grounded)`,
-                        promptTokens: actualPromptTokens,
-                        completionTokens,
-                        totalTokens: actualPromptTokens + completionTokens,
-                        persona: persona || 'asisten-umum',
-                    };
+                        const tokenRecord: TokenUsageRecord = {
+                            id: `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+                            userId: userInfo.userId,
+                            userName: userInfo.userName,
+                            timestamp: new Date().toISOString(),
+                            model: `${GEMINI_MODEL_ID} (grounded)`,
+                            promptTokens: actualPromptTokens,
+                            completionTokens,
+                            totalTokens: actualPromptTokens + completionTokens,
+                            persona: persona || 'asisten-umum',
+                        };
 
-                    saveTokenUsageRecord(tokenRecord).catch(e => console.error("Failed to save tokens", e));
-                    console.log(`[Token Usage]: User ${userInfo.userId} used ${tokenRecord.totalTokens} tokens (Gemini Grounded)`);
+                        saveTokenUsageRecord(tokenRecord).catch(e => console.error("Failed to save tokens", e));
+                        console.log(`[Token Usage]: User ${userInfo.userId} used ${tokenRecord.totalTokens} tokens (Gemini Grounded)`);
+                    }
+                });
+
+                console.log("[Chat API]: Google Gemini stream started");
+
+                // Use toTextStreamResponse - frontend will handle plain text
+                return result.toTextStreamResponse({
+                    headers: {
+                        "Cache-Control": "no-cache",
+                        "Connection": "keep-alive",
+                    },
+                });
+            } catch (error) {
+                console.error("[Chat API Error - Google]:", error);
+
+                const errorMessage = error instanceof Error ? error.message : String(error);
+
+                // Check for rate limit errors
+                if (errorMessage.includes('429') || errorMessage.includes('quota') || errorMessage.includes('rate')) {
+                    return new Response(
+                        JSON.stringify({
+                            error: "Rate limit tercapai. Google API memiliki batasan request. Coba lagi dalam beberapa detik atau gunakan Groq."
+                        }),
+                        { status: 429, headers: { "Content-Type": "application/json" } }
+                    );
                 }
-            });
 
-            console.log("[Chat API]: Google Gemini with Grounding succeeded");
-
-            // Return the text stream response
-            return result.toTextStreamResponse({
-                headers: {
-                    "Cache-Control": "no-cache",
-                    "Connection": "keep-alive",
-                },
-            });
+                return new Response(
+                    JSON.stringify({ error: `Google Gemini error: ${errorMessage}` }),
+                    { status: 500, headers: { "Content-Type": "application/json" } }
+                );
+            }
         }
 
         // ============================================
