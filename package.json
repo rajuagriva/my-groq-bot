@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ai-sdk/google": "^3.0.2",
     "@ai-sdk/groq": "^3.0.2",
     "@ai-sdk/react": "^3.0.5",
     "@vercel/postgres": "^0.10.0",

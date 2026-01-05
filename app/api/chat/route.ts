@@ -1,4 +1,6 @@
 import Groq from "groq-sdk";
+import { google } from "@ai-sdk/google";
+import { streamText } from "ai";
 import { saveTokenUsageRecord, TokenUsageRecord } from "@/lib/tokenStorage";
 
 // Initialize Groq client
@@ -6,12 +8,15 @@ const groq = new Groq({
     apiKey: process.env.GROQ_API_KEY,
 });
 
-// Priority-ordered model fallback list
-const FALLBACK_MODELS = [
+// Priority-ordered model fallback list for Groq
+const GROQ_FALLBACK_MODELS = [
     "llama-3.3-70b-versatile",          // Priority 1 - Robust main model
     "llama-3.1-8b-instant",             // Priority 2 - Fast fallback
     "gemma2-9b-it",                     // Priority 3 - Alternative
 ] as const;
+
+// Gemini model ID to use for grounded search
+const GEMINI_MODEL_ID = "gemini-2.0-flash-exp";
 
 // Helper function to check if error is retryable
 function isRetryableError(error: unknown): boolean {
@@ -47,31 +52,96 @@ function getUserInfo(req: Request): { userId: string; userName: string } {
 
 export async function POST(req: Request) {
     try {
-        const { messages, systemPrompt, persona } = await req.json();
+        const { messages, systemPrompt, persona, provider = 'groq' } = await req.json();
         const userInfo = getUserInfo(req);
-
-        // Validate API key
-        if (!process.env.GROQ_API_KEY) {
-            console.error("[Chat API Error]: GROQ_API_KEY is not set");
-            return new Response(
-                JSON.stringify({ error: "API key not configured" }),
-                { status: 500, headers: { "Content-Type": "application/json" } }
-            );
-        }
 
         // Build conversation with system prompt from persona selection
         const conversationMessages = systemPrompt
             ? [{ role: "system" as const, content: systemPrompt }, ...messages]
             : messages;
 
+        // ============================================
+        // GOOGLE GEMINI PROVIDER (with Search Grounding)
+        // ============================================
+        if (provider === 'google') {
+            // Validate Google API key
+            if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+                console.error("[Chat API Error]: GOOGLE_GENERATIVE_AI_API_KEY is not set");
+                return new Response(
+                    JSON.stringify({ error: "Google API key not configured. Set GOOGLE_GENERATIVE_AI_API_KEY in your environment." }),
+                    { status: 500, headers: { "Content-Type": "application/json" } }
+                );
+            }
+
+            console.log("[Chat API]: Using Google Gemini with Search Grounding enabled");
+
+            // Calculate prompt tokens for tracking
+            const promptText = conversationMessages.map((m: { content: string }) => m.content).join(' ');
+            const promptTokens = estimateTokenCount(promptText);
+
+            // Use streamText for Google Gemini with grounding via google.tools.googleSearch
+            const result = streamText({
+                model: google(GEMINI_MODEL_ID),
+                messages: conversationMessages,
+                // Enable Google Search Grounding as a tool
+                tools: {
+                    google_search: google.tools.googleSearch({}),
+                },
+                onFinish: async ({ text, usage }) => {
+                    // Save token usage after streaming completes
+                    // AI SDK uses inputTokens/outputTokens instead of promptTokens/completionTokens
+                    const completionTokens = usage?.outputTokens || estimateTokenCount(text);
+                    const actualPromptTokens = usage?.inputTokens || promptTokens;
+
+                    const tokenRecord: TokenUsageRecord = {
+                        id: `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+                        userId: userInfo.userId,
+                        userName: userInfo.userName,
+                        timestamp: new Date().toISOString(),
+                        model: `${GEMINI_MODEL_ID} (grounded)`,
+                        promptTokens: actualPromptTokens,
+                        completionTokens,
+                        totalTokens: actualPromptTokens + completionTokens,
+                        persona: persona || 'asisten-umum',
+                    };
+
+                    saveTokenUsageRecord(tokenRecord).catch(e => console.error("Failed to save tokens", e));
+                    console.log(`[Token Usage]: User ${userInfo.userId} used ${tokenRecord.totalTokens} tokens (Gemini Grounded)`);
+                }
+            });
+
+            console.log("[Chat API]: Google Gemini with Grounding succeeded");
+
+            // Return the text stream response
+            return result.toTextStreamResponse({
+                headers: {
+                    "Cache-Control": "no-cache",
+                    "Connection": "keep-alive",
+                },
+            });
+        }
+
+        // ============================================
+        // GROQ PROVIDER (default - with fallback models)
+        // ============================================
+
+        // Validate Groq API key
+        if (!process.env.GROQ_API_KEY) {
+            console.error("[Chat API Error]: GROQ_API_KEY is not set");
+            return new Response(
+                JSON.stringify({ error: "Groq API key not configured" }),
+                { status: 500, headers: { "Content-Type": "application/json" } }
+            );
+        }
+
         let lastError: Error | null = null;
 
         // Try each model in priority order
-        for (let i = 0; i < FALLBACK_MODELS.length; i++) {
-            const modelId = FALLBACK_MODELS[i];
+        for (let i = 0; i < GROQ_FALLBACK_MODELS.length; i++) {
+            const modelId = GROQ_FALLBACK_MODELS[i];
 
             try {
-                console.log(`[Chat API]: Trying model ${i + 1}/${FALLBACK_MODELS.length}: ${modelId}`);
+                console.log(`[Chat API]: Trying model ${i + 1}/${GROQ_FALLBACK_MODELS.length}: ${modelId}`);
 
                 // Create streaming completion
                 const stream = await groq.chat.completions.create({
@@ -137,7 +207,7 @@ export async function POST(req: Request) {
                 console.error(`[Chat API]: Model ${modelId} failed:`, error);
                 lastError = error instanceof Error ? error : new Error(String(error));
 
-                if (isRetryableError(error) && i < FALLBACK_MODELS.length - 1) {
+                if (isRetryableError(error) && i < GROQ_FALLBACK_MODELS.length - 1) {
                     console.log(`[Chat API]: Retryable error, trying next model...`);
                     continue;
                 }

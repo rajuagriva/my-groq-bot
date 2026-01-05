@@ -17,6 +17,14 @@ interface Message {
     content: string;
 }
 
+// AI Provider options
+type AIProvider = 'groq' | 'google';
+
+const PROVIDER_OPTIONS: { id: AIProvider; name: string; description: string; icon: string }[] = [
+    { id: 'groq', name: 'Groq (Llama)', description: 'Cepat & Efisien', icon: '⚡' },
+    { id: 'google', name: 'Google Gemini', description: 'Real-time Search', icon: '🌐' },
+];
+
 // Konfigurasi persona default
 const DEFAULT_PERSONA = {
     name: "Sari",
@@ -38,6 +46,8 @@ export default function ChatInterface({
     const [error, setError] = useState<string | null>(null);
     const [mounted, setMounted] = useState(false);
     const [currentTime, setCurrentTime] = useState('');
+    const [provider, setProvider] = useState<AIProvider>('groq');
+    const [showProviderMenu, setShowProviderMenu] = useState(false);
 
     // Set mounted state, current time, and initial welcome message on client side
     useEffect(() => {
@@ -87,6 +97,7 @@ export default function ChatInterface({
                     })),
                     systemPrompt,
                     persona: personaId,
+                    provider, // Include selected provider
                 }),
             });
 
@@ -120,8 +131,9 @@ export default function ChatInterface({
                 // Parse the SSE data format from Vercel AI SDK
                 const lines = chunk.split('\n');
                 for (const line of lines) {
+                    // Handle different stream formats
                     if (line.startsWith('0:')) {
-                        // Text chunk format: 0:"text content"
+                        // Text chunk format: 0:"text content" (Groq/Data stream)
                         try {
                             const textContent = JSON.parse(line.slice(2));
                             assistantContent += textContent;
@@ -135,6 +147,16 @@ export default function ChatInterface({
                         } catch {
                             // Skip non-JSON lines
                         }
+                    } else if (line && !line.startsWith('d:') && !line.startsWith('e:')) {
+                        // Plain text stream format (Google text stream)
+                        assistantContent += line;
+                        setMessages(prev =>
+                            prev.map(m =>
+                                m.id === assistantMessageId
+                                    ? { ...m, content: assistantContent }
+                                    : m
+                            )
+                        );
                     }
                 }
             }
@@ -181,7 +203,9 @@ export default function ChatInterface({
                             <h2 className="text-[#1b150d] dark:text-white text-lg font-bold leading-tight">{personaName}</h2>
                             <span className="text-xs font-medium text-[#1b150d]/60 dark:text-white/60 flex items-center gap-1">
                                 <span className={`size-2 rounded-full ${isLoading ? 'bg-yellow-500' : 'bg-green-500'} animate-pulse`}></span>
-                                {isLoading ? 'Sedang berpikir...' : 'Asisten AI'}
+                                {isLoading ? 'Sedang berpikir...' : (
+                                    provider === 'google' ? '🌐 Gemini (Live Search)' : '⚡ Groq'
+                                )}
                             </span>
                         </div>
                         <button className="flex items-center justify-center size-10 rounded-full overflow-hidden hover:opacity-80 transition-opacity">
@@ -269,29 +293,77 @@ export default function ChatInterface({
 
             {/* Input Area - Fixed at bottom via flex */}
             <footer className="flex-none bg-background-page dark:bg-background-dark p-4 pb-6 pt-2 z-50">
-                <div className="flex items-center gap-2 w-full max-w-3xl mx-auto relative">
-                    <form className="flex-1 flex gap-2 w-full" onSubmit={handleSubmit}>
-                        <label className="flex-1 min-w-0 relative">
-                            <div className="relative flex items-center w-full shadow-sm rounded-3xl bg-white dark:bg-[#332b24] overflow-hidden transition-all focus-within:ring-2 focus-within:ring-primary/50">
-                                <input
-                                    ref={inputRef}
-                                    className="w-full h-12 px-4 bg-transparent border-none focus:ring-0 text-[#1b150d] dark:text-white placeholder:text-[#9a744c]/60 text-base font-normal outline-none"
-                                    placeholder="Ketik pesan..."
-                                    type="text"
-                                    value={input}
-                                    onChange={(e) => setInput(e.target.value)}
-                                    disabled={isLoading}
-                                />
-                            </div>
-                        </label>
+                <div className="flex flex-col gap-2 w-full max-w-3xl mx-auto">
+                    {/* Provider Selector */}
+                    <div className="relative">
                         <button
-                            type="submit"
-                            disabled={isLoading || !input.trim()}
-                            className="flex items-center justify-center size-12 shrink-0 rounded-full bg-primary text-white shadow-md hover:bg-opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            type="button"
+                            onClick={() => setShowProviderMenu(!showProviderMenu)}
+                            className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-full bg-white/50 dark:bg-white/10 hover:bg-white/70 dark:hover:bg-white/20 transition-colors text-[#1b150d]/70 dark:text-white/70"
                         >
-                            <span className="material-symbols-outlined text-2xl ml-0.5">send</span>
+                            <span>{PROVIDER_OPTIONS.find(p => p.id === provider)?.icon}</span>
+                            <span>{PROVIDER_OPTIONS.find(p => p.id === provider)?.name}</span>
+                            <span className="material-symbols-outlined text-sm">expand_more</span>
                         </button>
-                    </form>
+
+                        {/* Provider Dropdown Menu */}
+                        {showProviderMenu && (
+                            <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-[#332b24] rounded-2xl shadow-xl border border-black/5 dark:border-white/10 overflow-hidden min-w-[220px] z-50">
+                                <div className="p-2">
+                                    <p className="text-xs font-medium text-[#1b150d]/50 dark:text-white/50 px-2 pb-2">Pilih Model AI</p>
+                                    {PROVIDER_OPTIONS.map(opt => (
+                                        <button
+                                            key={opt.id}
+                                            onClick={() => {
+                                                setProvider(opt.id);
+                                                setShowProviderMenu(false);
+                                            }}
+                                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left ${provider === opt.id
+                                                    ? 'bg-primary/10 text-primary'
+                                                    : 'hover:bg-black/5 dark:hover:bg-white/5 text-[#1b150d] dark:text-white'
+                                                }`}
+                                        >
+                                            <span className="text-xl">{opt.icon}</span>
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-semibold">{opt.name}</span>
+                                                <span className="text-xs opacity-60">{opt.description}</span>
+                                            </div>
+                                            {provider === opt.id && (
+                                                <span className="material-symbols-outlined text-primary ml-auto">check</span>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Input Form */}
+                    <div className="flex items-center gap-2 relative">
+                        <form className="flex-1 flex gap-2 w-full" onSubmit={handleSubmit}>
+                            <label className="flex-1 min-w-0 relative">
+                                <div className="relative flex items-center w-full shadow-sm rounded-3xl bg-white dark:bg-[#332b24] overflow-hidden transition-all focus-within:ring-2 focus-within:ring-primary/50">
+                                    <input
+                                        ref={inputRef}
+                                        className="w-full h-12 px-4 bg-transparent border-none focus:ring-0 text-[#1b150d] dark:text-white placeholder:text-[#9a744c]/60 text-base font-normal outline-none"
+                                        placeholder={provider === 'google' ? 'Tanyakan info terkini...' : 'Ketik pesan...'}
+                                        type="text"
+                                        value={input}
+                                        onChange={(e) => setInput(e.target.value)}
+                                        disabled={isLoading}
+                                        onFocus={() => setShowProviderMenu(false)}
+                                    />
+                                </div>
+                            </label>
+                            <button
+                                type="submit"
+                                disabled={isLoading || !input.trim()}
+                                className="flex items-center justify-center size-12 shrink-0 rounded-full bg-primary text-white shadow-md hover:bg-opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <span className="material-symbols-outlined text-2xl ml-0.5">send</span>
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </footer>
         </div>
